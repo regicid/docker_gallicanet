@@ -175,10 +175,10 @@ shinyServer(function(input, output){
                  tableau<<-prepare_data(input,liste)
                  output$plot<-renderPlotly(Plot(input,tableau))
               })
-  observeEvent(input$update,
-               {        
-                 output$plot<-renderPlotly(Plot(input,tableau))
-                })
+  # observeEvent(input$update,
+  #              {        
+  #                output$plot<-renderPlotly(Plot(input,tableau))
+  #               })
   
   output$downloadData <- downloadHandler(
     filename = function() {
