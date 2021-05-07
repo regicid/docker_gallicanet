@@ -26,12 +26,15 @@ RUN R -e "install.packages(c('shiny', 'rmarkdown'), repos='https://cloud.r-proje
 
 RUN R -e "install.packages(c('ggplot2','plotly','stringr','Hmisc','xml2','shinythemes','htmlwidgets','httr','ngramr','dplyr','htmltools','purrr','tidyr','leaflet.extras','lubridate'), repos='https://cloud.r-project.org/')"
 
+RUN R -e "install.packages(c('rvest','GGally','network','igraph','ggnetwork'), repos='https://cloud.r-project.org/')"
+
+
 # copy the app to the image
-RUN mkdir /root/gallicapresse
-COPY gallicapresse /root/gallicapresse
+RUN mkdir /root/gallicanet
+COPY gallicanet /root/gallicanet
 
 COPY Rprofile.site /usr/lib/R/etc/
 
 EXPOSE 3838
 
-CMD ["R", "-e", "shiny::runApp('/root/gallicapresse')"]
+CMD ["R", "-e", "shiny::runApp('/root/gallicanet')"]

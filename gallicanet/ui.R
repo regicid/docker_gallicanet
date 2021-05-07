@@ -4,7 +4,6 @@ library(plotly)
 library(stringr)
 library(markdown)
 library(shinythemes)
-library(shinyWidgets)
 library(htmltools)
 
 shinyUI(navbarPage("Gallicanet",
