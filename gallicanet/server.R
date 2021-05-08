@@ -93,6 +93,39 @@ prepare_data<-function(input,liste){
   from=str_replace_all(from,"-","/")
   to<-max(input$dateRange)
   to=str_replace_all(to,"-","/")
+  
+  liste$requete<-str_replace_all(liste$V1,"[:punct:]","%20")
+  liste$requete<-str_replace_all(liste$requete," ","%20")
+  
+  progress$set(message = "Patience...", value = 0)
+  
+  liste$base<-NA
+  for (i in 1:length(liste$base)) 
+  {
+    url_base<-str_c("https://gallica.bnf.fr/SRU?operation=searchRetrieve&exactSearch=true&maximumRecords=1&page=1&collapsing=false&version=1.2&query=(dc.language%20all%20%22fre%22)%20and%20(text%20adj%20%22",liste$requete[i],"%22%20)%20%20and%20(dc.type%20all%20%22fascicule%22)%20and%20(ocr.quality%20all%20%22Texte%20disponible%22)%20and%20(gallicapublication_date%3E=%22",from,"%22%20and%20gallicapublication_date%3C=%22",to,"%22)&suggest=10&keywords=",liste$requete[i])  
+    ngram_base<-as.character(read_xml(RETRY("GET",url_base,times = 3)))
+    b<-str_extract(str_extract(ngram_base,"numberOfRecordsDecollapser&gt;+[:digit:]+"),"[:digit:]+")
+    liste$base[i]<-b
+    progress$inc(1/length(liste$base), message = paste("Acquisition de la base...",as.integer((i/length(liste$base))*100),"%"))
+  }
+  
+  liste<-liste[as.integer(liste$base)>=as.integer(input$plancher_down),]
+ return(liste) 
+}
+
+
+prepare_data_suite<-function(input,liste){
+  
+  progress <- shiny::Progress$new()
+  on.exit(progress$close())
+  progress$set(message = str_c("Liste limitée à ",length(liste$base)," termes"), value = 0)
+  Sys.sleep(2)
+  from<-min(input$dateRange)
+  from=str_replace_all(from,"-","/")
+  to<-max(input$dateRange)
+  to=str_replace_all(to,"-","/")
+
+  
   tableau_croise<-as.data.frame(matrix(nrow=length(liste[,1])^2,ncol=2),stringsAsFactors = FALSE)
   for (i in 1:length(liste[,1])) 
   {
@@ -120,20 +153,7 @@ prepare_data<-function(input,liste){
   tableau_croise1$requete_1<-str_replace_all(tableau_croise1$requete_1," ","%20")
   tableau_croise1$requete_2<-str_replace_all(tableau_croise1$requete_2," ","%20")
   
-  liste$requete<-str_replace_all(liste$V1,"[:punct:]","%20")
-  liste$requete<-str_replace_all(liste$requete," ","%20")
   
-  progress$set(message = "Patience...", value = 0)
-  
-  liste$base<-NA
-  for (i in 1:length(liste$base)) 
-  {
-    url_base<-str_c("https://gallica.bnf.fr/SRU?operation=searchRetrieve&exactSearch=true&maximumRecords=1&page=1&collapsing=false&version=1.2&query=(dc.language%20all%20%22fre%22)%20and%20(text%20adj%20%22",liste$requete[i],"%22%20)%20%20and%20(dc.type%20all%20%22fascicule%22)%20and%20(ocr.quality%20all%20%22Texte%20disponible%22)%20and%20(gallicapublication_date%3E=%22",from,"%22%20and%20gallicapublication_date%3C=%22",to,"%22)&suggest=10&keywords=",liste$requete[i])  
-    ngram_base<-as.character(read_xml(RETRY("GET",url_base,times = 3)))
-    b<-str_extract(str_extract(ngram_base,"numberOfRecordsDecollapser&gt;+[:digit:]+"),"[:digit:]+")
-    liste$base[i]<-b
-    progress$inc(1/length(liste$base), message = paste("Acquisition de la base...",as.integer((i/length(liste$base))*100),"%"))
-  }
   
   progress$set(message = "Patience...", value = 0)
   
@@ -173,6 +193,7 @@ shinyServer(function(input, output, session){
   output$mot<-renderUI({selectizeInput("mot","Coeur du réseau",choices=sort(unique(c(tableau$ecrivain_1,tableau$ecrivain_2))),selected="louis aragon" )})
   output$plot<-renderPlotly(Plot(input,tableau))
   
+  
   output$target_upload <- reactive({
     return(!is.null(input$target_upload))
   })
@@ -184,7 +205,8 @@ shinyServer(function(input, output, session){
                  else{
                    inFile<-input$target_upload
                    liste<- read.csv(inFile$datapath, header = FALSE, encoding = "UTF-8")
-                   tableau<<-prepare_data(input,liste)
+                   liste<-prepare_data(input,liste)
+                   tableau<<-prepare_data_suite(input,liste)
                  }
                  if (is.null(input$net_file)){}
                  else{
