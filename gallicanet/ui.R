@@ -10,13 +10,12 @@ shinyUI(navbarPage("Gallicanet",
                    tabPanel("Réseau",fluidPage(
                             tags$head(),
                             plotlyOutput("plot"),
-                            #downloadButton('downloadPlot', 'Télécharger le graphique interactif'),
                             
                             column(4,
                                    wellPanel(
-                                     textInput("mot","Coeur du réseau","paul morand"),
+                                     uiOutput("mot"),
                             div(style="display: inline-block;vertical-align:bottom;width: 45%;",numericInput("plancher","Nombre minimum de mentions pour chaque terme",100,step = 10)),
-                            div(style="display: inline-block;vertical-align:bottom;width: 45%;",numericInput("seuil","Seuil définissant un lien entre deux termes",0.02,min = 0,max=1,step = 0.01))#,
+                            div(style="display: inline-block;vertical-align:bottom;width: 45%;",numericInput("seuil","Seuil définissant un lien entre deux termes",0.03,min = 0,max=1,step = 0.01))#,
                             #actionButton("update","Mettre à jour le graphe")
                             )),
                             column(4,
@@ -35,7 +34,10 @@ shinyUI(navbarPage("Gallicanet",
                                            start = as.Date.character("1918-11-11"), end = as.Date.character("1939-09-01"),
                                            separator="à", startview = "century"),
                             actionButton("do","Générer les graphiques"),
-                            downloadButton('downloadData', 'Télécharger les données')))
+                            downloadButton('downloadData', 'Télécharger les données'),
+                            downloadButton('downloadPlot', 'Télécharger le graphique interactif')
+                            ))
+                            
                             )),
                    tabPanel("Notice",shiny::includeMarkdown("Notice.md")),
                    tabPanel(title=HTML("<li><a href='https://shiny.ens-paris-saclay.fr/app/gallicagram' target='_blank'>Gallicagram")),

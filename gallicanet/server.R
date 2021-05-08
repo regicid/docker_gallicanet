@@ -64,15 +64,17 @@ Plot<-function(input,tableau){
   }
   df_net$ratio_moy[is.na(df_net$ratio_moy)]<-0
   #df_net<-df_net[is.na(df_net$ratio_moy)==FALSE,]
-  
+  taille_arretes<-scale(df_net$ratio_moy[1:(length(df_net$ratio_moy)-length(unique(df_net$name)))],center=F)
+  taille_arretes[which(taille_arretes>3)]<-3
+  taille_noeuds<-df_net$degree[(1+length(df_net$ratio_moy)-length(unique(df_net$name))):length(df_net$ratio_moy)]
+
   plot=ggplot(df_net, aes(x = x, y = y, xend = xend, yend = yend, label=name)) +
-    geom_edges(aes(color = color,size=ratio_moy^2,text=etiquette), alpha=0.2) +
-    geom_nodes(aes(color = color_v,size=degree^2,text=texte), alpha=0.4)+
+    geom_edges(aes(color = color,text=etiquette), size= taille_arretes, alpha=0.2) +
+    geom_nodes(aes(color = color_v,text=texte,size=degree),alpha=0.4)+scale_size(range = c(1,15))+
     geom_nodetext(aes(text=texte,color=color_n), size=3, alpha=1)+
     theme_blank(legend.title=element_blank())+guides(size=FALSE) + scale_color_manual(breaks = c("autre","autre ","reseau",ecrivain),
                                                                                       values=c("gray","black","red", "red"))
-  plot
-  #plot+ggsave("plot.png",scale=5)
+print(plot)
   plot2<-plot %>% ggplotly(tooltip="texte")
   xmax=max(df_net$x[df_net$color_n=="reseau"])+0.05
   xmin=min(df_net$x[df_net$color_n=="reseau"])-0.05
@@ -154,10 +156,11 @@ prepare_data<-function(input,liste){
 
 options(shiny.maxRequestSize = 100*1024^2)
 
-shinyServer(function(input, output){
+shinyServer(function(input, output, session){
   
 
   tableau<-read.csv("exemple.csv",encoding = "UTF-8")
+  output$mot<-renderUI({selectizeInput("mot","Coeur du réseau",choices=sort(unique(c(tableau$ecrivain_1,tableau$ecrivain_2))),selected="louis aragon" )})
   output$plot<-renderPlotly(Plot(input,tableau))
   
   output$target_upload <- reactive({
@@ -173,6 +176,7 @@ shinyServer(function(input, output){
                    liste<- read.csv(inFile$datapath, header = FALSE, encoding = "UTF-8")
                  }
                  tableau<<-prepare_data(input,liste)
+                 output$mot<-renderUI({selectizeInput("mot","Coeur du réseau",choices=sort(unique(c(tableau$ecrivain_1,tableau$ecrivain_2))),selected=1 )})
                  output$plot<-renderPlotly(Plot(input,tableau))
               })
   # observeEvent(input$update,
