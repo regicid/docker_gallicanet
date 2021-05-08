@@ -26,12 +26,17 @@ shinyUI(navbarPage("Gallicanet",
                                                  'text/comma-separated-values',
                                                  '.csv'
                                                ),buttonLabel='Importer', placeholder='une table de réseau'),
-                                     fileInput('target_upload','', 
+                                     div(style = "margin-top: -30px"),
+                                     p("Fichier .csv produit par Gallicanet"),
+                                     fileInput('target_upload', 
                                       accept = c(
                                         'text/csv',
                                         'text/comma-separated-values',
                                         '.csv'
-                                      ),buttonLabel='Importer', placeholder='une liste de termes'))),
+                                      ),label = '',buttonLabel='Importer', placeholder='une liste de termes'),
+                                     div(style = "margin-top: -30px"),
+                                     p("Fichier .csv, UTF-8, une colonne sans titre, mots séparés par une virgule")
+                                     )),
                             column(4,
                                    wellPanel(
                                      numericInput("distance","Distance maximale entre les termes (en caractères)",50),
@@ -39,11 +44,12 @@ shinyUI(navbarPage("Gallicanet",
                                            label = 'Période',
                                            start = as.Date.character("1918-11-11"), end = as.Date.character("1939-09-01"),
                                            separator="à", startview = "century"),
-                            actionButton("do","Générer le réseau"),
-                            downloadButton('downloadData', 'Télécharger les données'),
-                            downloadButton('downloadPlot', 'Télécharger le graphique interactif')
-                            ))
+                            actionButton("do","Générer le réseau")
                             
+                            )),
+                            column(12,
+                            downloadButton('downloadData', 'Télécharger les données'),
+                            downloadButton('downloadPlot', 'Télécharger le graphique interactif'))
                             )),
                    tabPanel("Notice",shiny::includeMarkdown("Notice.md")),
                    tabPanel(title=HTML("<li><a href='https://shiny.ens-paris-saclay.fr/app/gallicagram' target='_blank'>Gallicagram")),
