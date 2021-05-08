@@ -20,20 +20,26 @@ shinyUI(navbarPage("Gallicanet",
                             )),
                             column(4,
                                    wellPanel(
+                                     fileInput('net_file','', 
+                                               accept = c(
+                                                 'text/csv',
+                                                 'text/comma-separated-values',
+                                                 '.csv'
+                                               ),buttonLabel='Importer', placeholder='une table de réseau'),
                                      fileInput('target_upload','', 
                                       accept = c(
                                         'text/csv',
                                         'text/comma-separated-values',
                                         '.csv'
-                                      ),buttonLabel='Importer', placeholder='une liste de termes'),
-                            numericInput("distance","Distance maximale entre les termes (en caractères)",50))),
+                                      ),buttonLabel='Importer', placeholder='une liste de termes'))),
                             column(4,
                                    wellPanel(
+                                     numericInput("distance","Distance maximale entre les termes (en caractères)",50),
                                      dateRangeInput('dateRange',
                                            label = '\n',
                                            start = as.Date.character("1918-11-11"), end = as.Date.character("1939-09-01"),
                                            separator="à", startview = "century"),
-                            actionButton("do","Générer les graphiques"),
+                            actionButton("do","Générer le réseau"),
                             downloadButton('downloadData', 'Télécharger les données'),
                             downloadButton('downloadPlot', 'Télécharger le graphique interactif')
                             ))

@@ -167,15 +167,21 @@ shinyServer(function(input, output, session){
     return(!is.null(input$target_upload))
   })
   outputOptions(output, 'target_upload', suspendWhenHidden=FALSE)
-  
+
   observeEvent(input$do,
                {
                  if (is.null(input$target_upload)){}
                  else{
                    inFile<-input$target_upload
                    liste<- read.csv(inFile$datapath, header = FALSE, encoding = "UTF-8")
+                   tableau<<-prepare_data(input,liste)
                  }
-                 tableau<<-prepare_data(input,liste)
+                 if (is.null(input$target_upload)){}
+                 else{
+                   inFile<-input$target_upload
+                   tableau<<- read.csv(inFile$datapath, header = TRUE, encoding = "UTF-8")
+                 }
+                 
                  output$mot<-renderUI({selectizeInput("mot","Coeur du réseau",choices=sort(unique(c(tableau$ecrivain_1,tableau$ecrivain_2))),selected=1 )})
                  output$plot<-renderPlotly(Plot(input,tableau))
               })
