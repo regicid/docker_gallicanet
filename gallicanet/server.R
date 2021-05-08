@@ -93,15 +93,18 @@ prepare_data<-function(input,liste){
   from=str_replace_all(from,"-","/")
   to<-max(input$dateRange)
   to=str_replace_all(to,"-","/")
-  tableau_croise<-as.data.frame(cbind(c(NA),c(NA)))
+  tableau_croise<-as.data.frame(matrix(nrow=length(liste[,1])^2,ncol=2),stringsAsFactors = FALSE)
   for (i in 1:length(liste[,1])) 
   {
     for (j in 1:length(liste[,1])) 
     {
-      tableau_croise<-rbind(tableau_croise,cbind(liste[i,1],liste[j,1]))
+      h=(i-1)*length(liste[,1])+j
+      tableau_croise[h,1]<-liste[i,1]
+      tableau_croise[h,2]<-liste[j,1]
+      progress$inc(1/(length(liste[,1])^2), message = paste("Calcul des combinaisons...",round((h/(length(liste[,1])^2))*100,digits = 2),"%"))
+      
     }
   }
-  tableau_croise<-tableau_croise[-1,]
   colnames(tableau_croise)<-c("ecrivain_1","ecrivain_2")
   
   tableau_croise<-tableau_croise[tableau_croise$ecrivain_1!=tableau_croise$ecrivain_2,]
@@ -119,6 +122,8 @@ prepare_data<-function(input,liste){
   
   liste$requete<-str_replace_all(liste$V1,"[:punct:]","%20")
   liste$requete<-str_replace_all(liste$requete," ","%20")
+  
+  progress$set(message = "Patience...", value = 0)
   
   liste$base<-NA
   for (i in 1:length(liste$base)) 

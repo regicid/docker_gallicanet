@@ -26,7 +26,7 @@ shinyUI(navbarPage("Gallicanet",
                                                  'text/comma-separated-values',
                                                  '.csv'
                                                ),buttonLabel='Importer', placeholder='une table de réseau'),
-                                     div(style = "margin-top: -30px"),
+                                     div(style = "margin-top: -20px"),
                                      p("Fichier .csv produit par Gallicanet"),
                                      fileInput('target_upload', 
                                       accept = c(
@@ -34,7 +34,7 @@ shinyUI(navbarPage("Gallicanet",
                                         'text/comma-separated-values',
                                         '.csv'
                                       ),label = '',buttonLabel='Importer', placeholder='une liste de termes'),
-                                     div(style = "margin-top: -30px"),
+                                     div(style = "margin-top: -20px"),
                                      p("Fichier .csv, UTF-8, une colonne sans titre, mots séparés par une virgule")
                                      )),
                             column(4,
