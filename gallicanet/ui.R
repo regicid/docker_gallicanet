@@ -36,7 +36,7 @@ shinyUI(navbarPage("Gallicanet",
                                    wellPanel(
                                      numericInput("distance","Distance maximale entre les termes (en caractères)",50),
                                      dateRangeInput('dateRange',
-                                           label = '\n',
+                                           label = 'Période',
                                            start = as.Date.character("1918-11-11"), end = as.Date.character("1939-09-01"),
                                            separator="à", startview = "century"),
                             actionButton("do","Générer le réseau"),

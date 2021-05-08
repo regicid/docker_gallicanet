@@ -74,7 +74,6 @@ Plot<-function(input,tableau){
     geom_nodetext(aes(text=texte,color=color_n), size=3, alpha=1)+
     theme_blank(legend.title=element_blank())+guides(size=FALSE) + scale_color_manual(breaks = c("autre","autre ","reseau",ecrivain),
                                                                                       values=c("gray","black","red", "red"))
-print(plot)
   plot2<-plot %>% ggplotly(tooltip="texte")
   xmax=max(df_net$x[df_net$color_n=="reseau"])+0.05
   xmin=min(df_net$x[df_net$color_n=="reseau"])-0.05
@@ -86,16 +85,20 @@ print(plot)
   return(plot2)
 }
 prepare_data<-function(input,liste){
+  progress <- shiny::Progress$new()
+  on.exit(progress$close())
+  progress$set(message = "Patience...", value = 0)
+  
   from<-min(input$dateRange)
   from=str_replace_all(from,"-","/")
   to<-max(input$dateRange)
   to=str_replace_all(to,"-","/")
   tableau_croise<-as.data.frame(cbind(c(NA),c(NA)))
-  for (i in 1:length(liste$V1)) 
+  for (i in 1:length(liste[,1])) 
   {
-    for (j in 1:length(liste$V1)) 
+    for (j in 1:length(liste[,1])) 
     {
-      tableau_croise<-rbind(tableau_croise,cbind(liste$V1[i],liste$V1[j]))
+      tableau_croise<-rbind(tableau_croise,cbind(liste[i,1],liste[j,1]))
     }
   }
   tableau_croise<-tableau_croise[-1,]
@@ -119,24 +122,25 @@ prepare_data<-function(input,liste){
   
   liste$base<-NA
   for (i in 1:length(liste$base)) 
-  {tryCatch({
+  {
     url_base<-str_c("https://gallica.bnf.fr/SRU?operation=searchRetrieve&exactSearch=true&maximumRecords=1&page=1&collapsing=false&version=1.2&query=(dc.language%20all%20%22fre%22)%20and%20(text%20adj%20%22",liste$requete[i],"%22%20)%20%20and%20(dc.type%20all%20%22fascicule%22)%20and%20(ocr.quality%20all%20%22Texte%20disponible%22)%20and%20(gallicapublication_date%3E=%22",from,"%22%20and%20gallicapublication_date%3C=%22",to,"%22)&suggest=10&keywords=",liste$requete[i])  
-    ngram_base<-as.character(read_xml(url_base))
+    ngram_base<-as.character(read_xml(RETRY("GET",url_base,times = 3)))
     b<-str_extract(str_extract(ngram_base,"numberOfRecordsDecollapser&gt;+[:digit:]+"),"[:digit:]+")
     liste$base[i]<-b
-    print(i)
-  }, error=function(e){print("error")})}
+    progress$inc(1/length(liste$base), message = paste("Acquisition de la base...",as.integer((i/length(liste$base))*100),"%"))
+  }
+  
+  progress$set(message = "Patience...", value = 0)
   
   tableau_croise1$count<-NA
   for (i in 1:length(tableau_croise1$requete_1)) 
-  {tryCatch({
+  {
     url_base<-str_c("https://gallica.bnf.fr/SRU?operation=searchRetrieve&exactSearch=true&maximumRecords=1&page=1&collapsing=false&version=1.2&query=(dc.language%20all%20%22fre%22)%20and%20((%20text%20adj%20%22",tableau_croise1$requete_1[i],"%22%20%20prox/unit=word/distance=",input$distance,"%20%22",tableau_croise1$requete_2[i],"%22))%20%20and%20(dc.type%20all%20%22fascicule%22)%20and%20(ocr.quality%20all%20%22Texte%20disponible%22)%20and%20(gallicapublication_date%3E=%22",from,"%22%20and%20gallicapublication_date%3C=%22",to,"%22)&suggest=10&keywords=")  
-    ngram_base<-as.character(read_xml(url_base))
+    ngram_base<-as.character(read_xml(RETRY("GET",url_base,times = 3)))
     b<-str_extract(str_extract(ngram_base,"numberOfRecordsDecollapser&gt;+[:digit:]+"),"[:digit:]+")
     tableau_croise1$count[i]<-b
-    print(i)
-  }, error=function(e){print("error")})}
-  
+    progress$inc(1/length(tableau_croise1$requete_1), message = paste("Téléchargement en cours...",as.integer((i/length(tableau_croise1$requete_1))*100),"%"))
+  }
   tableau_croise1$base1<-NA
   tableau_croise1$base2<-NA
   for (i in 1:length(liste$base)) 
@@ -151,6 +155,7 @@ prepare_data<-function(input,liste){
   tableau_croise1$ratio_1<-tableau_croise1$count/tableau_croise1$base1
   tableau_croise1$ratio_2<-tableau_croise1$count/tableau_croise1$base2
   tableau_croise1$ratio_moy<-(tableau_croise1$ratio_1+tableau_croise1$ratio_2)/2
+
   return(tableau_croise1)
 }
 
@@ -159,7 +164,7 @@ options(shiny.maxRequestSize = 100*1024^2)
 shinyServer(function(input, output, session){
   
 
-  tableau<-read.csv("exemple.csv",encoding = "UTF-8")
+  tableau<<-read.csv("exemple.csv",encoding = "UTF-8")
   output$mot<-renderUI({selectizeInput("mot","Coeur du réseau",choices=sort(unique(c(tableau$ecrivain_1,tableau$ecrivain_2))),selected="louis aragon" )})
   output$plot<-renderPlotly(Plot(input,tableau))
   
@@ -176,13 +181,15 @@ shinyServer(function(input, output, session){
                    liste<- read.csv(inFile$datapath, header = FALSE, encoding = "UTF-8")
                    tableau<<-prepare_data(input,liste)
                  }
-                 if (is.null(input$target_upload)){}
+                 if (is.null(input$net_file)){}
                  else{
-                   inFile<-input$target_upload
+                   inFile<-input$net_file
                    tableau<<- read.csv(inFile$datapath, header = TRUE, encoding = "UTF-8")
                  }
-                 
-                 output$mot<-renderUI({selectizeInput("mot","Coeur du réseau",choices=sort(unique(c(tableau$ecrivain_1,tableau$ecrivain_2))),selected=1 )})
+                 updateNumericInput(session,"plancher",value = 1)
+                 updateNumericInput(session,"seuil",value = 0.01)
+                 mot_select<-tableau$ecrivain_1[tableau$ratio_moy>=0.01][1]
+                 output$mot<-renderUI({selectizeInput("mot","Coeur du réseau",choices=sort(unique(c(tableau$ecrivain_1,tableau$ecrivain_2))),selected=mot_select )})
                  output$plot<-renderPlotly(Plot(input,tableau))
               })
   # observeEvent(input$update,
