@@ -159,13 +159,14 @@ prepare_data_suite<-function(input,liste){
   
   tableau_croise1$count<-NA
   for (i in 1:length(tableau_croise1$requete_1)) 
-  {
+  {tryCatch({
     url_base<-str_c("https://gallica.bnf.fr/SRU?operation=searchRetrieve&exactSearch=true&maximumRecords=1&page=1&collapsing=false&version=1.2&query=(dc.language%20all%20%22fre%22)%20and%20((%20text%20adj%20%22",tableau_croise1$requete_1[i],"%22%20%20prox/unit=word/distance=",input$distance,"%20%22",tableau_croise1$requete_2[i],"%22))%20%20and%20(dc.type%20all%20%22fascicule%22)%20and%20(ocr.quality%20all%20%22Texte%20disponible%22)%20and%20(gallicapublication_date%3E=%22",from,"%22%20and%20gallicapublication_date%3C=%22",to,"%22)&suggest=10&keywords=")  
-    ngram_base<-as.character(read_xml(RETRY("GET",url_base,times = 3)))
+    tryCatch({ngram_base<-RETRY("GET",url_base,times = 3)})
+    ngram_base<-as.character(read_xml(ngram_base))
     b<-str_extract(str_extract(ngram_base,"numberOfRecordsDecollapser&gt;+[:digit:]+"),"[:digit:]+")
     tableau_croise1$count[i]<-b
     progress$inc(1/length(tableau_croise1$requete_1), message = paste("Téléchargement en cours...",as.integer((i/length(tableau_croise1$requete_1))*100),"%"))
-  }
+  })}
   tableau_croise1$base1<-NA
   tableau_croise1$base2<-NA
   for (i in 1:length(liste$base)) 
