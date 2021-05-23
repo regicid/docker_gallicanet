@@ -5,6 +5,7 @@ library(stringr)
 library(markdown)
 library(shinythemes)
 library(htmltools)
+library(shinybusy)
 
 shinyUI(navbarPage("Gallicanet",
                    tabPanel("Réseau",fluidPage(
@@ -20,6 +21,8 @@ shinyUI(navbarPage("Gallicanet",
                             )),
                             column(4,
                                    wellPanel(
+                                     selectInput("pretraites","Explorer des réseaux pré-traités",choices = list("Ecrivains de l'entre-deux guerres"=1,"Personnages publics de l'Occupation"=2),selected=1),
+                                     div(style = "margin-top: -30px"),
                                      fileInput('net_file','', 
                                                accept = c(
                                                  'text/csv',

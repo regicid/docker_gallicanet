@@ -15,8 +15,10 @@ library(network)
 library(igraph)
 library(ggnetwork)
 library(htmlwidgets)
+library(shinybusy)
 
 Plot<-function(input,tableau){
+  show_modal_spinner()
   tableau<-tableau[tableau$base2>=input$plancher,]
   tableau<-tableau[tableau$base1>=input$plancher,]
   
@@ -82,6 +84,7 @@ Plot<-function(input,tableau){
   
   
   plot2<-plot2%>%layout(xaxis=list(range=c(xmin,xmax)),yaxis=list(range=c(ymin,ymax)))
+  remove_modal_spinner()
   return(plot2)
 }
 prepare_data<-function(input,liste){
@@ -193,7 +196,20 @@ shinyServer(function(input, output, session){
   tableau<<-read.csv("exemple.csv",encoding = "UTF-8")
   output$mot<-renderUI({selectizeInput("mot","Coeur du réseau",choices=sort(unique(c(tableau$ecrivain_1,tableau$ecrivain_2))),selected="louis aragon" )})
   output$plot<-renderPlotly(Plot(input,tableau))
-  
+  observeEvent(input$pretraites,{
+    if(input$pretraites==1){
+      tableau<<-read.csv("exemple.csv",encoding = "UTF-8")
+      updateNumericInput(session,"plancher",value = 100)
+      updateNumericInput(session,"seuil",value = 0.03)
+      output$mot<-renderUI({selectizeInput("mot","Coeur du réseau",choices=sort(unique(c(tableau$ecrivain_1,tableau$ecrivain_2))),selected="louis aragon" )})
+    }
+    if(input$pretraites==2){
+      tableau<<-read.csv("collaboration.csv",encoding = "UTF-8")
+      updateNumericInput(session,"plancher",value = 100)
+      updateNumericInput(session,"seuil",value = 0.02)
+      output$mot<-renderUI({selectizeInput("mot","Coeur du réseau",choices=sort(unique(c(tableau$ecrivain_1,tableau$ecrivain_2))),selected="Robert Brasillach" )})
+    }
+  })
   
   output$target_upload <- reactive({
     return(!is.null(input$target_upload))

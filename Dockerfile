@@ -28,6 +28,7 @@ RUN R -e "install.packages(c('ggplot2','plotly','stringr','Hmisc','xml2','shinyt
 
 RUN R -e "install.packages(c('rvest','GGally','network','igraph','ggnetwork'), repos='https://cloud.r-project.org/')"
 
+RUN R -e "install.packages(c('shinybusy'), repos='https://cloud.r-project.org/')"
 
 # copy the app to the image
 RUN mkdir /root/gallicanet
