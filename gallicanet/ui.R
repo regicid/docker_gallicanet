@@ -42,12 +42,13 @@ shinyUI(navbarPage("Gallicanet",
                                      )),
                             column(4,
                                    wellPanel(
-                                     div(style="display: inline-block;vertical-align:bottom;width: 45%;",numericInput("distance","Distance maximale entre les termes (en mots)",50)),
+                                     radioButtons("source", "",choices = list("Gallica-presse"=1,"CAIRN"=3),inline = T),
+                                     conditionalPanel(condition="input.source == 1",div(style="display: inline-block;vertical-align:bottom;width: 45%;",numericInput("distance","Distance maximale entre les termes (en mots)",50)),
                                      div(style="display: inline-block;vertical-align:bottom;width: 45%;",numericInput("plancher_down","Nombre minimum de mentions pour chaque terme",100,step = 10)),
                                      dateRangeInput('dateRange',
                                            label = 'Période',
                                            start = as.Date.character("1918-11-11"), end = as.Date.character("1939-09-01"),
-                                           separator="à", startview = "century"),
+                                           separator="à", startview = "century")),
                             actionButton("do","Générer le réseau")
                             
                             )),

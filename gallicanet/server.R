@@ -99,20 +99,40 @@ prepare_data<-function(input,liste){
   
   liste$requete<-str_replace_all(liste$V1,"[:punct:]","%20")
   liste$requete<-str_replace_all(liste$requete," ","%20")
+  liste$requete<-iconv(liste$requete,from="UTF-8",to="ASCII//TRANSLIT")
   
   progress$set(message = "Patience...", value = 0)
   
   liste$base<-NA
   for (i in 1:length(liste$base)) 
   {
-    url_base<-str_c("https://gallica.bnf.fr/SRU?operation=searchRetrieve&exactSearch=true&maximumRecords=1&page=1&collapsing=false&version=1.2&query=(dc.language%20all%20%22fre%22)%20and%20(text%20adj%20%22",liste$requete[i],"%22%20)%20%20and%20(dc.type%20all%20%22fascicule%22)%20and%20(ocr.quality%20all%20%22Texte%20disponible%22)%20and%20(gallicapublication_date%3E=%22",from,"%22%20and%20gallicapublication_date%3C=%22",to,"%22)&suggest=10&keywords=",liste$requete[i])  
-    ngram_base<-as.character(read_xml(RETRY("GET",url_base,times = 3)))
-    b<-str_extract(str_extract(ngram_base,"numberOfRecordsDecollapser&gt;+[:digit:]+"),"[:digit:]+")
+    if(input$source==1)
+    {
+      url_base<-str_c("https://gallica.bnf.fr/SRU?operation=searchRetrieve&exactSearch=true&maximumRecords=1&page=1&collapsing=false&version=1.2&query=(dc.language%20all%20%22fre%22)%20and%20(text%20adj%20%22",liste$requete[i],"%22%20)%20%20and%20(dc.type%20all%20%22fascicule%22)%20and%20(ocr.quality%20all%20%22Texte%20disponible%22)%20and%20(gallicapublication_date%3E=%22",from,"%22%20and%20gallicapublication_date%3C=%22",to,"%22)&suggest=10&keywords=",liste$requete[i])  
+      ngram_base<-as.character(read_xml(RETRY("GET",url_base,times = 3)))
+      b<-str_extract(str_extract(ngram_base,"numberOfRecordsDecollapser&gt;+[:digit:]+"),"[:digit:]+")
+    }
+    if(input$source==2)
+    {
+      url_base<-str_c("https://scholar.google.com/scholar?as_q=%22",liste$requete[i],"%22&as_epq=&as_oq=&as_eq=&as_occt=any&as_sauthors=-%22",liste$requete[i],"%22&as_publication=&as_ylo=&as_yhi=&hl=fr&lr=lang_fr&as_sdt=0%2C5&as_vis=1")
+      ngram_base<-read_html(RETRY("GET",url_base,times = 3, add_headers(.headers = c("User-Agent"="Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:93.0) Gecko/20100101 Firefox/93.0"))))
+      b<-html_text(html_node(ngram_base,"#gs_ab_md > div:nth-child(1)"))
+      b<-str_remove_all(b,"[:space:]")
+      b<-str_extract_all(b,".+résultat")
+      b<-str_extract_all(b,"[:digit:]+")
+    }
+    if(input$source==3)
+    {
+      url_base<-str_c("https://www.cairn.info/resultats_recherche.php?src1=TypePub&word1=1&operator1=AND&src2=Tx&word2=",liste$requete[i],"&exact2=1&operator2=&nparams=2&submitAdvForm=Chercher")
+      print(i)
+      ngram_base<-read_html(RETRY("GET",url_base,times = 3, add_headers(.headers = c("Host"= "www.cairn.info","User-Agent"="PARIS-SACLAY-Benjamin-Gallicanet"))))
+      b<-html_text(html_node(ngram_base,".filter-result-list > li:nth-child(1) > b:nth-child(1)"))
+    }
     liste$base[i]<-b
     progress$inc(1/length(liste$base), message = paste("Acquisition de la base...",as.integer((i/length(liste$base))*100),"%"))
   }
   
-  liste<-liste[as.integer(liste$base)>=as.integer(input$plancher_down),]
+  if(input$source==1){liste<-liste[as.integer(liste$base)>=as.integer(input$plancher_down),]}
  return(liste) 
 }
 
@@ -163,10 +183,30 @@ prepare_data_suite<-function(input,liste){
   tableau_croise1$count<-NA
   for (i in 1:length(tableau_croise1$requete_1)) 
   {tryCatch({
-    url_base<-str_c("https://gallica.bnf.fr/SRU?operation=searchRetrieve&exactSearch=true&maximumRecords=1&page=1&collapsing=false&version=1.2&query=(dc.language%20all%20%22fre%22)%20and%20((%20text%20adj%20%22",tableau_croise1$requete_1[i],"%22%20%20prox/unit=word/distance=",input$distance,"%20%22",tableau_croise1$requete_2[i],"%22))%20%20and%20(dc.type%20all%20%22fascicule%22)%20and%20(ocr.quality%20all%20%22Texte%20disponible%22)%20and%20(gallicapublication_date%3E=%22",from,"%22%20and%20gallicapublication_date%3C=%22",to,"%22)&suggest=10&keywords=")  
-    tryCatch({ngram_base<-RETRY("GET",url_base,times = 3)})
-    ngram_base<-as.character(read_xml(ngram_base))
-    b<-str_extract(str_extract(ngram_base,"numberOfRecordsDecollapser&gt;+[:digit:]+"),"[:digit:]+")
+    if(input$source==1)
+    {
+      url_base<-str_c("https://gallica.bnf.fr/SRU?operation=searchRetrieve&exactSearch=true&maximumRecords=1&page=1&collapsing=false&version=1.2&query=(dc.language%20all%20%22fre%22)%20and%20((%20text%20adj%20%22",tableau_croise1$requete_1[i],"%22%20%20prox/unit=word/distance=",input$distance,"%20%22",tableau_croise1$requete_2[i],"%22))%20%20and%20(dc.type%20all%20%22fascicule%22)%20and%20(ocr.quality%20all%20%22Texte%20disponible%22)%20and%20(gallicapublication_date%3E=%22",from,"%22%20and%20gallicapublication_date%3C=%22",to,"%22)&suggest=10&keywords=")  
+      tryCatch({ngram_base<-RETRY("GET",url_base,times = 3)})
+      ngram_base<-as.character(read_xml(ngram_base))
+      b<-str_extract(str_extract(ngram_base,"numberOfRecordsDecollapser&gt;+[:digit:]+"),"[:digit:]+")
+    }
+    if(input$source==2)
+    {
+      url_base<-str_c("https://scholar.google.com/scholar?as_q=%22",tableau_croise1$requete_1[i],"%22+%22",tableau_croise1$requete_2[i],"%22&as_epq=&as_oq=&as_eq=&as_occt=any&as_sauthors=-%22",tableau_croise1$requete_1[i],"%22-%22",tableau_croise1$requete_2[i],"%22&as_publication=&as_ylo=&as_yhi=&hl=fr&lr=lang_fr&as_sdt=0%2C5&as_vis=1")
+      tryCatch({ngram_base<-RETRY("GET",url_base,times = 3)})
+      ngram_base<-read_html(ngram_base)
+      b<-html_text(html_node(ngram_base,"#gs_ab_md > div:nth-child(1)"))
+      b<-str_remove_all(b,"[:space:]")
+      b<-str_extract_all(b,".+résultat")
+      b<-str_extract_all(b,"[:digit:]+")
+    }
+    if(input$source==3)
+    {
+      url_base<-str_c("https://www.cairn.info/resultats_recherche.php?src1=TypePub&word1=1&operator1=AND&src2=Tx&word2=",tableau_croise1$requete_1[i],"&exact2=1&operator2=AND&src3=Tx&word3=",tableau_croise1$requete_2[i],"&exact3=1&operator3=&nparams=3&submitAdvForm=Chercher")
+      print(i)
+      tryCatch({ngram_base<-read_html(RETRY("GET",url_base,times = 3, add_headers(.headers = c("Host"= "www.cairn.info","User-Agent"="PARIS-SACLAY-Benjamin-Gallicanet"))))})
+      b<-html_text(html_node(ngram_base,".filter-result-list > li:nth-child(1) > b:nth-child(1)"))
+    }
     tableau_croise1$count[i]<-b
     progress$inc(1/length(tableau_croise1$requete_1), message = paste("Téléchargement en cours...",as.integer((i/length(tableau_croise1$requete_1))*100),"%"))
   })}
