@@ -125,7 +125,8 @@ prepare_data<-function(input,liste){
     {
       url_base<-str_c("https://www.cairn.info/resultats_recherche.php?src1=TypePub&word1=1&operator1=AND&src2=Tx&word2=",liste$requete[i],"&exact2=1&operator2=&nparams=2&submitAdvForm=Chercher")
       print(i)
-      ngram_base<-read_html(RETRY("GET",url_base,times = 3, add_headers(.headers = c("Host"= "www.cairn.info","User-Agent"="PARIS-SACLAY-Benjamin-Gallicanet"))))
+      ngram_base<-RETRY("GET",url_base,times = 3, add_headers(.headers = c("Host"= "www.cairn.info","User-Agent"="PARIS-SACLAY-Benjamin-Gallicanet")))
+      ngram_base<-read_html(ngram_base)
       b<-html_text(html_node(ngram_base,".filter-result-list > li:nth-child(1) > b:nth-child(1)"))
     }
     liste$base[i]<-b
@@ -204,7 +205,10 @@ prepare_data_suite<-function(input,liste){
     {
       url_base<-str_c("https://www.cairn.info/resultats_recherche.php?src1=TypePub&word1=1&operator1=AND&src2=Tx&word2=",tableau_croise1$requete_1[i],"&exact2=1&operator2=AND&src3=Tx&word3=",tableau_croise1$requete_2[i],"&exact3=1&operator3=&nparams=3&submitAdvForm=Chercher")
       print(i)
-      tryCatch({ngram_base<-read_html(RETRY("GET",url_base,times = 3, add_headers(.headers = c("Host"= "www.cairn.info","User-Agent"="PARIS-SACLAY-Benjamin-Gallicanet"))))})
+      tryCatch({
+        ngram_base<-RETRY("GET",url_base,times = 3, add_headers(.headers = c("Host"= "www.cairn.info","User-Agent"="PARIS-SACLAY-Benjamin-Gallicanet")))
+        ngram_base<-read_html(ngram_base)
+        })
       b<-html_text(html_node(ngram_base,".filter-result-list > li:nth-child(1) > b:nth-child(1)"))
     }
     tableau_croise1$count[i]<-b
