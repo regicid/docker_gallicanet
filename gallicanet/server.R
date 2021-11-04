@@ -17,6 +17,8 @@ library(ggnetwork)
 library(htmlwidgets)
 library(shinybusy)
 
+httr::set_config(config(ssl_verifypeer = 0L))
+
 Plot<-function(input,tableau){
   show_modal_spinner()
   tableau<-tableau[tableau$base2>=input$plancher,]
@@ -101,11 +103,7 @@ prepare_data<-function(input,liste){
   liste$requete<-str_replace_all(liste$requete," ","%20")
   liste$requete<-iconv(liste$requete,from="UTF-8",to="ASCII//TRANSLIT")
   
-  if(input$source==3){
-    url<-"https://www.cairn.info/resultats_recherche.php?src1=Tx&word1=fran%C3%A7ois+mauriac&exact1=1&operator1=&nparams=1&submitAdvForm=Chercher"
-    print(RETRY("GET",url,times = 3, add_headers(.headers = c("Host"= "www.cairn.info","User-Agent"="PARIS-SACLAY-Benjamin-Gallicanet"))))
-  }
-  
+ 
   progress$set(message = "Patience...", value = 0)
   
   liste$base<-NA
@@ -285,10 +283,7 @@ shinyServer(function(input, output, session){
                  output$mot<-renderUI({selectizeInput("mot","Coeur du réseau",choices=sort(unique(c(tableau$ecrivain_1,tableau$ecrivain_2))),selected=mot_select )})
                  output$plot<-renderPlotly(Plot(input,tableau))
               })
-  # observeEvent(input$update,
-  #              {        
-  #                output$plot<-renderPlotly(Plot(input,tableau))
-  #               })
+
   
   output$downloadData <- downloadHandler(
     filename = function() {
