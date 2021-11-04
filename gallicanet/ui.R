@@ -16,7 +16,9 @@ shinyUI(navbarPage("Gallicanet",
                                    wellPanel(
                                      uiOutput("mot"),
                             div(style="display: inline-block;vertical-align:bottom;width: 45%;",numericInput("plancher","Nombre minimum de mentions pour chaque terme",100,step = 10)),
-                            div(style="display: inline-block;vertical-align:bottom;width: 45%;",numericInput("seuil","Seuil définissant un lien entre deux termes",0.03,min = 0,max=1,step = 0.01))#,
+                            div(style="display: inline-block;vertical-align:bottom;width: 45%;",numericInput("seuil","Seuil définissant un lien entre deux termes",0.03,min = 0,max=1,step = 0.01)),
+                            div(style="display: inline-block;vertical-align:bottom;",downloadButton('downloadData', 'Données')),
+                            div(style="display: inline-block;vertical-align:bottom;",downloadButton('downloadPlot', 'Graphique interactif'))
                             )),
                             column(4,
                                    wellPanel(
@@ -50,10 +52,7 @@ shinyUI(navbarPage("Gallicanet",
                                            separator="à", startview = "century")),
                             actionButton("do","Générer le réseau")
                             
-                            )),
-                            column(12,
-                            downloadButton('downloadData', 'Télécharger les données'),
-                            downloadButton('downloadPlot', 'Télécharger le graphique interactif'))
+                            ))
                             )),
                    tabPanel("Notice",shiny::includeMarkdown("Notice.md")),
                    tabPanel(title=HTML("<li><a href='https://shiny.ens-paris-saclay.fr/app/gallicagram' target='_blank'>Gallicagram")),
